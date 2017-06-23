@@ -32,10 +32,11 @@ Encryption directory vault now set up
 ```
 
 ### Example: checking the encryption status of a directory
+This is also displayed when using the -v option on setup.
 
 ```console
 $ e2crypt status vault
-Encrypted directory:  vault0
+Encrypted directory:  vault
 Policy version:       0
 Filename cipher:      aes-256-cts
 Contents cipher:      aes-256-xts
@@ -52,12 +53,15 @@ FTRsD7y2dUyXl6e8omKYbB  IdLqPffZBKSebTeh6hZI7C  tReYAc2tKyIOHSIcaSV2DB
 
 $ e2crypt open vault
 Enter passphrase: 
+Encryption directory vault now decrypted
 
 $ ls vault
 fstab  passwd  services
 ```
 
 ### Example: locking an encrypted directory
+Enhanced permissions are needed to flush the file cache, so the contents
+of the encrypted directory can be displayed properly.
 
 ```console
 $ ls vault
@@ -65,6 +69,7 @@ fstab  passwd  services
 
 $ e2crypt close vault
 [sudo] password for user:
+Encryption directory vault now encrypted
 
 $ ls vault
 FTRsD7y2dUyXl6e8omKYbB  IdLqPffZBKSebTeh6hZI7C  tReYAc2tKyIOHSIcaSV2DB
