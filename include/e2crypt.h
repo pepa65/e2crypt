@@ -8,18 +8,9 @@
 #include <keyutils.h>
 
 #define UNUSED __attribute__((unused))
-#define VERBOSE_PRINT(opts, format, args...) ({      \
-    if ( opts.verbose )                              \
-        fprintf(stderr, format "\n", ##args); \
-    })                                               \
-
-/*
- * Definitions imported from Linux kernel 4.1.2.
- */
-
 #define EXT4_KEY_DESCRIPTOR_SIZE 8
 
-/* Policy provided via an ioctl on the topmost directory */
+// Policy provided via an ioctl on the topmost directory
 struct ext4_encryption_policy {
     char version;
     char contents_encryption_mode;
@@ -38,14 +29,14 @@ struct ext4_encryption_policy {
 #define EXT4_POLICY_FLAGS_PAD_MASK  0x03
 #define EXT4_POLICY_FLAGS_VALID     0x03
 
-/* Encryption algorithms */
+// Encryption algorithms
 #define EXT4_ENCRYPTION_MODE_INVALID        0
 #define EXT4_ENCRYPTION_MODE_AES_256_XTS    1
 #define EXT4_ENCRYPTION_MODE_AES_256_GCM    2
 #define EXT4_ENCRYPTION_MODE_AES_256_CBC    3
 #define EXT4_ENCRYPTION_MODE_AES_256_CTS    4
 
-/* Encryption parameters */
+// Encryption parameters
 #define EXT4_XTS_TWEAK_SIZE 16
 #define EXT4_AES_128_ECB_KEY_SIZE 16
 #define EXT4_AES_256_GCM_KEY_SIZE 32
@@ -83,16 +74,11 @@ static inline
 char padding_length_to_flags(unsigned padding)
 {
     switch ( padding ) {
-        case 4:
-            return EXT4_POLICY_FLAGS_PAD_4;
-        case 8:
-            return EXT4_POLICY_FLAGS_PAD_8;
-        case 16:
-            return EXT4_POLICY_FLAGS_PAD_16;
-        case 32:
-            return EXT4_POLICY_FLAGS_PAD_32;
-        default:
-            fprintf(stderr, "Invalid padding value: %d\n", padding);
+        case 4: return EXT4_POLICY_FLAGS_PAD_4;
+        case 8: return EXT4_POLICY_FLAGS_PAD_8;
+        case 16: return EXT4_POLICY_FLAGS_PAD_16;
+        case 32: return EXT4_POLICY_FLAGS_PAD_32;
+        default: fprintf(stderr, "Invalid padding value: %d\n", padding);
             abort();
     }
 }
@@ -122,20 +108,15 @@ struct cipher cipher_modes[] = {
 static inline
 const char *cipher_mode_to_string(unsigned char mode)
 {
-    if ( mode >= NR_EXT4_ENCRYPTION_MODES )
-        return "invalid";
-
+    if ( mode >= NR_EXT4_ENCRYPTION_MODES ) return "invalid";
     return cipher_modes[mode].cipher_name;
 }
 
 static inline
 char cipher_string_to_mode(const char *cipher)
 {
-    for ( size_t i = 0; i < NR_EXT4_ENCRYPTION_MODES; i++ ) {
-        if ( strcmp(cipher, cipher_modes[i].cipher_name) == 0 )
-            return i;
-    }
-
+    for ( size_t i = 0; i < NR_EXT4_ENCRYPTION_MODES; i++ )
+        if ( strcmp(cipher, cipher_modes[i].cipher_name) == 0 ) return i;
     fprintf(stderr, "Invalid cipher mode: %s\n", cipher);
     abort();
 }
@@ -143,11 +124,9 @@ char cipher_string_to_mode(const char *cipher)
 static inline
 size_t cipher_key_size(const char *cipher)
 {
-    for ( size_t i = 0; i < NR_EXT4_ENCRYPTION_MODES; i++ ) {
+    for ( size_t i = 0; i < NR_EXT4_ENCRYPTION_MODES; i++ )
         if ( strcmp(cipher, cipher_modes[i].cipher_name) == 0 )
             return cipher_modes[i].cipher_key_size;
-    }
-
     fprintf(stderr, "Invalid cipher mode: %s\n", cipher);
     abort();
 }
@@ -160,7 +139,7 @@ int container_status(const char *dir_path);
 int container_create(const char *dir_path, struct ext4_crypt_options);
 int container_attach(const char *dir_path, struct ext4_crypt_options);
 int container_detach(const char *dir_path, struct ext4_crypt_options);
-void generate_random_name(char *, size_t);
+void generate_random_name(char *, size_t, bool);
 int find_key_by_descriptor(key_desc_t *, key_serial_t *);
 int request_key_for_descriptor(key_desc_t *, struct ext4_crypt_options, bool);
 int remove_key_for_descriptor(key_desc_t *);
