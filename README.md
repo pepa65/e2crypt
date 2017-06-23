@@ -80,7 +80,6 @@ FTRsD7y2dUyXl6e8omKYbB  IdLqPffZBKSebTeh6hZI7C  tReYAc2tKyIOHSIcaSV2DB
 ```sh
 git clone https://github.com/pepa65/e2crypt
 cd e2crypt
-git checkout e2crypt
 cmake .
 make
 sudo make install
