@@ -287,6 +287,7 @@ int container_attach(const char *dir_path, struct ext4_crypt_options opts)
     }
 
     close(dirfd);
+    printf("Encryption directory %s now decrypted\n", dir_path);
     return 0;
 }
 
@@ -319,6 +320,7 @@ int container_detach(const char *dir_path, struct ext4_crypt_options UNUSED opts
     }
 
     close(dirfd);
+    printf("Encryption directory %s now encrypted\n", dir_path);
     system("echo 2 |sudo tee /proc/sys/vm/drop_caches >/dev/null");
     return 0;
 }

@@ -11,14 +11,14 @@
 #include "e2crypt.h"
 
 static
-void usage(const char *program)
+void usage(FILE *std, const char *program)
 {
-    fprintf(stderr, "%s - userspace tool to manage encrypted directories on ext4 filesystems\n\n", program);
-    fprintf(stderr, "USAGE: %s [-v] [-p <len>] [-k <desc>] setup | open | close | status <dir>\n", program);
-    fprintf(stderr, "  -v|--verbose:        Verbose output of setup\n");
-    fprintf(stderr, "  -p|--padding <len>:  Padding of filename (4, 8, 16 or 32, default 4)\n");
-    fprintf(stderr, "  -k|--key <desc>:     Key descriptor (1 to %d characters long)\n", EXT4_KEY_DESCRIPTOR_SIZE);
-    fprintf(stderr, "  <dir>:               Directory that is setup for encryption\n\n");
+    fprintf(std, "%s - userspace tool to manage encrypted directories on ext4 filesystems\n\n", program);
+    fprintf(std, "USAGE: %s [-v] [-p <len>] [-k <desc>] setup | open | close | status <dir>\n", program);
+    fprintf(std, "  -v|--verbose:        Verbose output of setup\n");
+    fprintf(std, "  -p|--padding <len>:  Padding of filename (4, 8, 16 or 32, default 4)\n");
+    fprintf(std, "  -k|--key <desc>:     Key descriptor (1 to %d characters long)\n", EXT4_KEY_DESCRIPTOR_SIZE);
+    fprintf(std, "  <dir>:               Directory that is setup for encryption\n\n");
 }
 
 static
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 
         switch ( c ) {
             case 'h':
-                usage(program);
+                usage(stdout, program);
                 return EXIT_SUCCESS;
 
             case 'v':
@@ -84,14 +84,14 @@ int main(int argc, char *argv[])
                 break;
 
             default:
-                usage(program);
+                usage(stderr, program);
                 fprintf(stderr, "Invalid command option\n");
                 return EXIT_FAILURE;
         }
     }
 
     if ( optind + 1 >= argc ) {
-        usage(program);
+        usage(stderr, program);
         fprintf(stderr, "Invalid command invocation\n");
         return EXIT_FAILURE;
     }
@@ -100,13 +100,12 @@ int main(int argc, char *argv[])
     const char *command = argv[optind];
     const char *dir_path = argv[optind + 1];
 
-    if ( strcmp(command, "help") == 0 ) usage(program);
-    else if ( strcmp(command, "setup") == 0 ) {
+    if ( strcmp(command, "setup") == 0 ) {
         if (opts.filename_padding == 0) opts.filename_padding = 4;
         status = container_create(dir_path, opts);
     }
     else if ( opts.key_descriptor[0] != 0 || opts.filename_padding != 0 || opts.verbose ) {
-        usage(program);
+        usage(stderr, program);
         fprintf(stderr, "Error: options -v, -p and -k can only be used with setup\n");
         status = -1;
     }
@@ -114,7 +113,7 @@ int main(int argc, char *argv[])
     else if ( strcmp(command, "open") == 0 ) status = container_attach(dir_path, opts);
     else if ( strcmp(command, "close") == 0 ) status = container_detach(dir_path, opts);
     else {
-        usage(program);
+        usage(stderr, program);
         fprintf(stderr, "Error: unrecognized command %s\n", command);
         status = -1;
     }
