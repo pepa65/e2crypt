@@ -13,7 +13,7 @@
 #include <termios.h>
 #include <errno.h>
 
-#include "ext4-crypt.h"
+#include "e2crypt.h"
 
 //
 // Derives passphrase into an ext4 encryption key.

@@ -3,4 +3,4 @@ CMakeFiles/*
 *.cmake
 install_manifest.txt
 Makefile
-ext4-crypt
+e2crypt
