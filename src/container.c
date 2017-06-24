@@ -245,7 +245,7 @@ int container_create(const char *dir_path)
     // The directory is left in an inconsistent state if the superblock is unmounted before any inode is created
     if (create_dummy_inode(dirfd) < 0) return -1;
 
-    printf("Directory %s now encrypted", dir_path);
+    printf("Directory %s now encrypted\n", dir_path);
     close(dirfd);
     return 0;
 }
@@ -284,7 +284,7 @@ int container_attach(const char *dir_path)
     }
 
     close(dirfd);
-    printf("Directory %s now decrypted", dir_path);
+    printf("Directory %s now decrypted\n", dir_path);
     return 0;
 }
 
@@ -317,7 +317,7 @@ int container_detach(const char *dir_path)
     }
 
     close(dirfd);
-    printf("Directory %s now recrypted", dir_path);
+    printf("Directory %s now recrypted\n", dir_path);
     system("echo 2 |sudo tee /proc/sys/vm/drop_caches >/dev/null");
     return 0;
 }
