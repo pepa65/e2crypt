@@ -6,18 +6,21 @@ Linux kernel 4.1.3 introduced native encryption for the ext4 filesystem.
 This tool, *e2crypt*, is a userspace tool to manage encrypted ext4 directories.
 Its options are intended to make it ease to use for an enduser. The code has
 largely been copied from [ext4-crypt](https://github.com/gdelugre/ext4-crypt),
-but with adapted options and messages semantics and greatly increased key range.
+but the options have been simplified, the messages easier to understand, but
+the security greatly improved by a greater key range.
 
-From `e2fsprogs` version 1.43 onwards, a new tool called `e4crypt` is bundled to
-work with the ext4 encryption facilities, but its semantics are more obscure.
+From `e2fsprogs` version 1.43 onwards, a new tool called `e4crypt` is bundled
+to work with the ext4 encryption facilities, but its semantics make it harder
+to use.
 
 ## Usage
 ```console
-e2crypt [-v] [-p <len>] [-k <desc>] setup | open | close | status <dir>
-  -v|--verbose:         Verbose output of setup
-  -p|--padding <len>:   Padding of filename (4, 8, 16 or 32, default 4)
-  -k|--key <desc>:      Key descriptor (1 to 8 characters long)
-  <dir>:                Directory that is setup for encryption
+e2crypt [ [-p|--padding <len>] -s|--setup | -d|--decrypt | -e|--encrypt ] <dir>
+    -p|--padding <len>:   Padding of filename (4, 8, 16 or 32, default 4)
+    -s|--setup <dir>:     Setup directory <dir> for encryption
+    -d|--decrypt <dir>:   Decrypt directory <dir>
+    -e|--encrypt <dir>:   Encrypt directory <dir>
+  If just <dir> is specified, information on directory <dir> is displayed.
 ```
 
 ### Example: preparing a directory for encryption
@@ -25,7 +28,7 @@ The target directory must exist on an ext4 filesystem and be empty.
 
 ```console
 $ mkdir vault
-$ e2crypt setup vault
+$ e2crypt -s vault
 Enter passphrase:
 Confirm passphrase:
 Encryption directory vault now set up
@@ -35,7 +38,7 @@ Encryption directory vault now set up
 This is also displayed when using the -v option on setup.
 
 ```console
-$ e2crypt status vault
+$ e2crypt vault
 Encrypted directory:  vault
 Policy version:       0
 Filename cipher:      aes-256-cts
@@ -51,7 +54,7 @@ Key serial:           186749517
 $ ls vault
 FTRsD7y2dUyXl6e8omKYbB  IdLqPffZBKSebTeh6hZI7C  tReYAc2tKyIOHSIcaSV2DB
 
-$ e2crypt open vault
+$ e2crypt -d vault
 Enter passphrase: 
 Encryption directory vault now decrypted
 
@@ -67,7 +70,7 @@ of the encrypted directory can be displayed properly.
 $ ls vault
 fstab  passwd  services
 
-$ e2crypt close vault
+$ e2crypt -e vault
 [sudo] password for user:
 Encryption directory vault now encrypted
 

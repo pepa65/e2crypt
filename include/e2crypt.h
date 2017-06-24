@@ -62,12 +62,10 @@ struct ext4_encryption_key {
 #define EXT4_FULL_KEY_DESCRIPTOR_SIZE (EXT4_KEY_DESCRIPTOR_SIZE * 2 + EXT4_KEY_DESC_PREFIX_SIZE)
 
 struct ext4_crypt_options {
-    bool verbose;
     char *contents_cipher;
     char *filename_cipher;
     unsigned filename_padding;
     char key_descriptor[EXT4_KEY_DESCRIPTOR_SIZE];
-    bool requires_descriptor;
 };
 
 static inline

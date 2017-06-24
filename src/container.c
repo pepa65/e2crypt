@@ -125,13 +125,12 @@ int setup_ext4_encryption(const char *dir_path, int dirfd, struct ext4_crypt_opt
     policy.filenames_encryption_mode = cipher_string_to_mode(opts.filename_cipher);
     policy.flags = padding_length_to_flags(opts.filename_padding);
 
-    if ( opts.requires_descriptor )
-        generate_random_name(opts.key_descriptor, sizeof(opts.key_descriptor), 0);
+    generate_random_name(opts.key_descriptor, sizeof(opts.key_descriptor), 0);
 
     memcpy(policy.master_key_descriptor, opts.key_descriptor, sizeof(policy.master_key_descriptor));
 
     int ret = set_ext4_encryption_policy(dirfd, &policy);
-    if (opts.verbose) container_status(dir_path);
+    container_status(dir_path);
 		return ret;
 }
 
