@@ -19,8 +19,8 @@ bool is_ext4_filesystem(const char *path)
 {
     struct statfs fs;
 
-    if ( statfs(path, &fs) != 0 ) {
-        fprintf(stderr, "Cannot get filesystem information for %s: %s\n", path, strerror(errno));
+    if (statfs(path, &fs) != 0) {
+        error(0, "Cannot get filesystem information for %s: %s", path, strerror(errno));
         return false;
     }
 
@@ -32,18 +32,18 @@ bool is_ext4_filesystem(const char *path)
 static
 int open_ext4_path(const char *path, int flags)
 {
-    if ( !is_ext4_filesystem(path) ) {
-        fprintf(stderr, "Error: %s not found on ext4 filesystem\n", path);
+    if (!is_ext4_filesystem(path)) {
+        error(0, "Error: %s not found on ext4 filesystem", path);
         return -1;
     }
 
     int open_flags = O_RDONLY | O_NONBLOCK | flags;
     int fd = open(path, open_flags);
-    if ( fd == -1 ) {
-        if ( errno == ENOTDIR )
-            fprintf(stderr, "Invalid argument: %s not a directory\n", path);
+    if (fd == -1) {
+        if (errno == ENOTDIR)
+            error(0, "Invalid argument: %s not a directory", path);
         else
-            fprintf(stderr, "Cannot open %s: %s\n", path, strerror(errno));
+            error(0, "Cannot open %s: %s", path, strerror(errno));
 
         return -1;
     }
@@ -63,19 +63,19 @@ int open_ext4_directory(const char *dir_path)
 static
 int get_ext4_encryption_policy(int dirfd, struct ext4_encryption_policy *policy, bool *has_policy)
 {
-    if ( ioctl(dirfd, EXT4_IOC_GET_ENCRYPTION_POLICY, policy) < 0 ) {
-        switch ( errno ) {
+    if (ioctl(dirfd, EXT4_IOC_GET_ENCRYPTION_POLICY, policy) < 0) {
+        switch (errno) {
             case ENOENT:
                 *has_policy = false;
                 return 0;
 
             case ENOTSUP:
-                fprintf(stderr, "This filesystem does not support encryption\n");
-                fprintf(stderr, "Make sure the kernel supports CONFIG_EXT4_ENCRYPTION\n");
+                error(0, "This filesystem does not support encryption");
+                error(0, "Make sure the kernel supports CONFIG_EXT4_ENCRYPTION");
                 return -1;
 
             default:
-                fprintf(stderr, "Cannot access ext4 encryption policy: %s\n", strerror(errno));
+                error(0, "Cannot access ext4 encryption policy: %s", strerror(errno));
                 return -1;
         }
     }
@@ -88,23 +88,23 @@ int get_ext4_encryption_policy(int dirfd, struct ext4_encryption_policy *policy,
 static
 int set_ext4_encryption_policy(int dirfd, struct ext4_encryption_policy *policy)
 {
-    if ( ioctl(dirfd, EXT4_IOC_SET_ENCRYPTION_POLICY, policy) < 0 ) {
-        switch ( errno ) {
+    if (ioctl(dirfd, EXT4_IOC_SET_ENCRYPTION_POLICY, policy) < 0) {
+        switch (errno) {
             case ENOTSUP:
-                fprintf(stderr, "This filesystem does not support encryption\n");
-                fprintf(stderr, "Make sure rhe kernel supports CONFIG_EXT4_ENCRYPTION\n");
+                error(0, "This filesystem does not support encryption");
+                error(0, "Make sure rhe kernel supports CONFIG_EXT4_ENCRYPTION");
                 return -1;
 
             case EINVAL:
-                fprintf(stderr, "Encryption parameters do not match the ones already set\n");
+                error(0, "Encryption parameters do not match the ones already set");
                 return -1;
 
             case ENOTEMPTY:
-                fprintf(stderr, "Cannot setup encrypted directory: not empty\n");
+                error(0, "Cannot setup encrypted directory: not empty");
                 return -1;
 
             default:
-                fprintf(stderr, "Cannot set ext4 encryption policy: %s\n", strerror(errno));
+                error(0, "Cannot set ext4 encryption policy: %s", strerror(errno));
                 return -1;
         }
     }
@@ -114,20 +114,18 @@ int set_ext4_encryption_policy(int dirfd, struct ext4_encryption_policy *policy)
 
 // Setup a new encryption policy for the specified directory
 static
-int setup_ext4_encryption(const char *dir_path, int dirfd, struct ext4_crypt_options opts) 
+int setup_ext4_encryption(const char *dir_path, int dirfd)
 {
     struct ext4_encryption_policy policy;    
 
     // Current policy version
     policy.version = 0;
 
-    policy.contents_encryption_mode = cipher_string_to_mode(opts.contents_cipher);
-    policy.filenames_encryption_mode = cipher_string_to_mode(opts.filename_cipher);
-    policy.flags = padding_length_to_flags(opts.filename_padding);
+    policy.contents_encryption_mode = cipher_string_to_mode(contents_cipher);
+    policy.filenames_encryption_mode = cipher_string_to_mode(filename_cipher);
+    policy.flags = padding_length_to_flags(padding);
 
-    generate_random_name(opts.key_descriptor, sizeof(opts.key_descriptor), 0);
-
-    memcpy(policy.master_key_descriptor, opts.key_descriptor, sizeof(policy.master_key_descriptor));
+    generate_random_name(policy.master_key_descriptor, EXT4_KEY_DESCRIPTOR_SIZE, 0);
 
     int ret = set_ext4_encryption_policy(dirfd, &policy);
     container_status(dir_path);
@@ -138,20 +136,20 @@ int setup_ext4_encryption(const char *dir_path, int dirfd, struct ext4_crypt_opt
 int container_status(const char *dir_path)
 {
     int dirfd = open_ext4_directory(dir_path);
-    if ( dirfd == -1 ) {
-        printf("Cannot open %s\n", dir_path);
+    if (dirfd == -1) {
+        error(0, "Cannot open %s", dir_path);
         return -1;
     }
 
     struct ext4_encryption_policy policy;
     bool has_policy;
 
-    if ( get_ext4_encryption_policy(dirfd, &policy, &has_policy) < 0 ) {
-        printf("Cannot access directory properties of %s\n", dir_path);
+    if (get_ext4_encryption_policy(dirfd, &policy, &has_policy) < 0) {
+        error(0, "Cannot access directory properties of %s", dir_path);
         return -1;
     }
 
-    if ( !has_policy ) {
+    if (!has_policy) {
         printf("Regular directory:    %s\n", dir_path);
         return 1;
     }
@@ -167,7 +165,7 @@ int container_status(const char *dir_path)
     printf("\n");
 
     key_serial_t key_serial;
-    if ( find_key_by_descriptor(&policy.master_key_descriptor, &key_serial) == -1 )
+    if (find_key_by_descriptor(&policy.master_key_descriptor, &key_serial) == -1)
         printf("Key serial:           not found\n");
     else printf("Key serial:           %d\n", key_serial);
 
@@ -183,13 +181,13 @@ int create_dummy_inode(int dirfd)
     generate_random_name(dummy_name, EXT4_KEY_DERIVATION_NONCE_SIZE, 1);
 
     int fd = openat(dirfd, dummy_name, O_NONBLOCK|O_CREAT|O_TRUNC|O_RDWR, S_IRUSR|S_IWUSR);
-    if ( fd == -1 ) {
-        fprintf(stderr, "Cannot create dummy inode in directory: %s\n", strerror(errno));
+    if (fd == -1) {
+        error(0, "Cannot create nonce in directory: %s", strerror(errno));
         return -1;
     }
 
-    if ( unlinkat(dirfd, dummy_name, 0) != 0 ) {
-        fprintf(stderr, "Cannot unlink dummy inode in directory: %s\n", strerror(errno));
+    if (unlinkat(dirfd, dummy_name, 0) != 0) {
+        error(0, "Cannot unlink nonce in directory: %s", strerror(errno));
         return -1;
     }
 
@@ -198,71 +196,71 @@ int create_dummy_inode(int dirfd)
 }
 
 // Setup an encrypted directory at dir_path
-int container_create(const char *dir_path, struct ext4_crypt_options opts)
+int container_create(const char *dir_path)
 {
-    if ( crypto_init() == -1 )
+    if (crypto_init() == -1)
         return -1;
 
     int dirfd = open_ext4_directory(dir_path);
-    if ( dirfd == -1 )
+    if (dirfd == -1)
         return -1;
 
     struct ext4_encryption_policy policy;
     bool has_policy;
 
     // First check if the directory is not already encrypted
-    if ( get_ext4_encryption_policy(dirfd, &policy, &has_policy) < 0 ) {
-        fprintf(stderr, "Cannot access directory properties of %s", dir_path);
+    if (get_ext4_encryption_policy(dirfd, &policy, &has_policy) < 0) {
+        error(0, "Cannot access directory properties of %s", dir_path);
         return -1;
     }
 
-    if ( has_policy ) {
-        fprintf(stderr, "Cannot setup encrypted directory %s: already encrypted\n", dir_path);
+    if (has_policy) {
+        error(0, "Cannot encrypt directory %s: already encrypted", dir_path);
         return -1;
     }
 
     // Sets up the encryption policy
-    if ( setup_ext4_encryption(dir_path, dirfd, opts) < 0 ) {
-        fprintf(stderr, "Error in seting up encrypted directory %s\n", dir_path);
+    if (setup_ext4_encryption(dir_path, dirfd) < 0) {
+        error(0, "Error in encrypting directory %s", dir_path);
         return -1;
     }
 
     // Check if the encryption policy was successfully created
-    if ( get_ext4_encryption_policy(dirfd, &policy, &has_policy) < 0 ) {
-        fprintf(stderr, "Cannot access directory properties of %s\n", dir_path);
+    if (get_ext4_encryption_policy(dirfd, &policy, &has_policy) < 0) {
+        error(0, "Cannot access directory properties of %s", dir_path);
         return -1;
     }
 
-    if ( !has_policy ) {
-        fprintf(stderr, "Seting up encrypted directory %s failed\n", dir_path);
+    if (!has_policy) {
+        error(0, "Encrypting directory %s failed", dir_path);
         return -1;
     }
 
     // Attach a key to the directory
-    if ( request_key_for_descriptor(&policy.master_key_descriptor, opts, true) < 0 ) {
-        fprintf(stderr, "Error in seting password for encrypted directory %s\n", dir_path);
+    if (request_key_for_descriptor(&policy.master_key_descriptor, true) < 0) {
+        error(0, "Error seting password for encrypted directory %s", dir_path);
         return -1;
     }
 
     // The directory is left in an inconsistent state if the superblock is unmounted before any inode is created
-    if ( create_dummy_inode(dirfd) < 0 ) return -1;
+    if (create_dummy_inode(dirfd) < 0) return -1;
 
-    printf("Encryption directory %s now set up\n", dir_path);
+    printf("Directory %s now encrypted", dir_path);
     close(dirfd);
     return 0;
 }
 
 // Use a password on the encrypted directory
-int container_attach(const char *dir_path, struct ext4_crypt_options opts)
+int container_attach(const char *dir_path)
 {
-    if ( crypto_init() == -1 ) {
-        fprintf(stderr, "Cannot access cryptography system\n");
+    if (crypto_init() == -1) {
+        error(0, "Cannot access cryptography system");
         return -1;
     }
 
     int dirfd = open_ext4_directory(dir_path);
-    if ( dirfd == -1 ) {
-        fprintf(stderr, "Cannot open directory %s\n", dir_path);
+    if (dirfd == -1) {
+        error(0, "Cannot open directory %s", dir_path);
         return -1;
     }
 
@@ -270,32 +268,32 @@ int container_attach(const char *dir_path, struct ext4_crypt_options opts)
     bool has_policy;
 
     // Check that this directory has already been set up for encryption
-    if ( get_ext4_encryption_policy(dirfd, &policy, &has_policy) < 0 ) {
-        fprintf(stderr, "Not an encrypted directory: %s\n", dir_path);
+    if (get_ext4_encryption_policy(dirfd, &policy, &has_policy) < 0) {
+        error(0, "Not an encrypted directory: %s", dir_path);
         return -1;
     }
 
-    if ( !has_policy ) {
-        fprintf(stderr, "Cannot use password: %s not an encrypted directory\n", dir_path);
+    if (!has_policy) {
+        error(0, "Cannot decrypt: %s not an encrypted directory", dir_path);
         return -1;
     }
 
-    if ( request_key_for_descriptor(&policy.master_key_descriptor, opts, false) < 0 ) {
-        fprintf(stderr, "Error in using password on %s\n", dir_path);
+    if (request_key_for_descriptor(&policy.master_key_descriptor, false) < 0) {
+        error(0, "Error in decrypting directory %s", dir_path);
         return -1;
     }
 
     close(dirfd);
-    printf("Encryption directory %s now decrypted\n", dir_path);
+    printf("Directory %s now decrypted", dir_path);
     return 0;
 }
 
 // Recrypt the encrypted directory
-int container_detach(const char *dir_path, struct ext4_crypt_options UNUSED opts)
+int container_detach(const char *dir_path)
 {
     int dirfd = open_ext4_directory(dir_path);
-    if ( dirfd == -1 ) {
-        fprintf(stderr, "Can't open directory %s\n", dir_path);
+    if (dirfd == -1) {
+        error(0, "Cannot open directory %s", dir_path);
         return -1;
     }
 
@@ -303,23 +301,23 @@ int container_detach(const char *dir_path, struct ext4_crypt_options UNUSED opts
     bool has_policy;
 
     // Check that this directory is setup for encryption
-    if ( get_ext4_encryption_policy(dirfd, &policy, &has_policy) < 0 ) {
-        fprintf(stderr, "Cannot access directory properties of %s\n", dir_path);
+    if (get_ext4_encryption_policy(dirfd, &policy, &has_policy) < 0) {
+        error(0, "Cannot access directory properties of %s", dir_path);
         return -1;
     }
 
-    if ( !has_policy ) {
-        fprintf(stderr, "Directory %s not setup for encryption\n", dir_path);
+    if (!has_policy) {
+        error(0, "Cannot recrypt, directory %s not set up for encryption", dir_path);
         return -1;
     }
 
-    if ( remove_key_for_descriptor(&policy.master_key_descriptor) < 0 ) {
-        fprintf(stderr, "Directory %s already encrypted\n", dir_path);
+    if (remove_key_for_descriptor(&policy.master_key_descriptor) < 0) {
+        error(0, "Cannot recrypt, directory %s not decrypted", dir_path);
         return -1;
     }
 
     close(dirfd);
-    printf("Encryption directory %s now encrypted\n", dir_path);
+    printf("Directory %s now recrypted", dir_path);
     system("echo 2 |sudo tee /proc/sys/vm/drop_caches >/dev/null");
     return 0;
 }

@@ -26,8 +26,8 @@ int derive_passphrase_to_key(char *pass, size_t pass_sz, struct ext4_encryption_
             (1 << 14), 8, 16, // N, r, p
             key->raw, key->size);
 
-    if ( ret != 0 ) {
-        fprintf(stderr, "Failed to derive key from passphrase\n");
+    if (ret != 0) {
+        error(0, "Failed to derive key from passphrase");
         return -1;
     }
 
@@ -41,7 +41,7 @@ void build_full_key_descriptor(key_desc_t *key_desc, full_key_desc_t *full_key_d
     char tmp[sizeof(*full_key_desc) + 1]; // one extra space for terminating zero
     strcpy(tmp, EXT4_KEY_DESC_PREFIX);
 
-    for ( size_t i = 0; i < sizeof(*key_desc); i++ ) {
+    for (size_t i = 0; i < sizeof(*key_desc); i++) {
         snprintf(tmp + EXT4_KEY_DESC_PREFIX_SIZE + i * 2, 3, "%02x", (*key_desc)[i] & 0xff);
     }
 
@@ -65,28 +65,28 @@ ssize_t read_passphrase(const char *prompt, char *key, size_t n)
     size_t key_sz = 0;
 
     // Show prompt, disable echo
-    if ( tty_input ) {
+    if (tty_input) {
         fprintf(stderr, "%s", prompt);
         fflush(stderr);
 
-        if ( tcgetattr(stdin_fd, &old) != 0 ) {
+        if (tcgetattr(stdin_fd, &old) != 0) {
             perror("tcgetattr");
             return -1;
         }
 
         new = old;
         new.c_lflag &= ~ECHO;
-        if ( tcsetattr(stdin_fd, TCSAFLUSH, &new) != 0 ) {
+        if (tcsetattr(stdin_fd, TCSAFLUSH, &new) != 0) {
             perror("tcsetattr");
             return -1;
         }
     }
 
-    if ( fgets(key, n, stdin) ) key_sz = strlen(key);
-    if ( key_sz > 0 && key[key_sz - 1] == '\n' ) key[--key_sz] = '\0';
+    if (fgets(key, n, stdin)) key_sz = strlen(key);
+    if (key_sz > 0 && key[key_sz - 1] == '\n') key[--key_sz] = '\0';
 
     // Restore echo
-    if ( tty_input ) {
+    if (tty_input) {
         tcsetattr(stdin_fd, TCSAFLUSH, &old);
         fprintf(stderr, "\n");
     }
@@ -105,13 +105,13 @@ void random_init()
 // Initialize the cryptographic library
 int crypto_init()
 {
-    if ( sodium_init() == -1 ) {
-        fprintf(stderr, "Cannot initialize libsodium\n");
+    if (sodium_init() == -1) {
+        error(0, "Cannot initialize libsodium");
         return -1;
     }
 
     // Make sure ptace cannot attach and disable core dumps
-    if ( prctl(PR_SET_DUMPABLE, 0) != 0 ) {
+    if (prctl(PR_SET_DUMPABLE, 0) != 0) {
         perror("prctl");
         return -1;
     }
@@ -124,7 +124,7 @@ int crypto_init()
 void generate_random_name(char *name, size_t length, bool filename)
 {
     int byte;
-    for ( size_t i = 0; i < length; i++ ) {
+    for (size_t i = 0; i < length; i++) {
 again:  byte = random() % 256;
         if (filename && (byte == '/' || byte == 0)) goto again;
         name[i] = byte;
@@ -141,7 +141,7 @@ int find_key_by_descriptor(key_desc_t *key_desc, key_serial_t *serial)
 
     long key_serial = keyctl_search(KEY_SPEC_USER_SESSION_KEYRING,
             EXT4_ENCRYPTION_KEY_TYPE, full_key_descriptor, 0);
-    if ( key_serial != -1 ) {
+    if (key_serial != -1) {
         *serial = key_serial;
         return 0;
     }
@@ -153,13 +153,13 @@ int find_key_by_descriptor(key_desc_t *key_desc, key_serial_t *serial)
 int remove_key_for_descriptor(key_desc_t *key_desc)
 {
     key_serial_t key_serial;
-    if ( find_key_by_descriptor(key_desc, &key_serial) < 0 ) {
-        fprintf(stderr, "No encryption key found: %s\n", strerror(errno));
+    if (find_key_by_descriptor(key_desc, &key_serial) < 0) {
+        error(0, "No encryption key found: %s", strerror(errno));
         return -1;
     }
 
-    if ( keyctl_unlink(key_serial, KEY_SPEC_USER_SESSION_KEYRING) == -1 ) {
-        fprintf(stderr, "Cannot remove encryption key: %s\n", strerror(errno));
+    if (keyctl_unlink(key_serial, KEY_SPEC_USER_SESSION_KEYRING) == -1) {
+        error(0, "Cannot remove encryption key: %s", strerror(errno));
         return -1;
     }
 
@@ -167,7 +167,7 @@ int remove_key_for_descriptor(key_desc_t *key_desc)
 }
 
 // Request a key to be attached to the specified descriptor
-int request_key_for_descriptor(key_desc_t *key_desc, struct ext4_crypt_options opts, bool confirm)
+int request_key_for_descriptor(key_desc_t *key_desc, bool confirm)
 {
     int retries = 5;
     char passphrase[EXT4_MAX_PASSPHRASE_SZ];
@@ -176,45 +176,45 @@ int request_key_for_descriptor(key_desc_t *key_desc, struct ext4_crypt_options o
     full_key_desc_t full_key_descriptor;
     build_full_key_descriptor(key_desc, &full_key_descriptor);
 
-    while ( --retries >= 0 ) {
+    while (--retries >= 0) {
         pass_sz = read_passphrase("Enter passphrase: ", passphrase, sizeof(passphrase));
-        if ( pass_sz < 0 )
+        if (pass_sz < 0)
             return -1;
 
-        if ( pass_sz == 0 ) {
-            fprintf(stderr, "Passphrase cannot be empty\n");
+        if (pass_sz == 0) {
+            error(0, "Passphrase cannot be empty");
             continue;
         }
 
-        if ( !confirm )
+        if (!confirm)
             break;
 
         read_passphrase("Confirm passphrase: ", confirm_passphrase, sizeof(confirm_passphrase));
-        if ( strcmp(passphrase, confirm_passphrase) == 0 )
+        if (strcmp(passphrase, confirm_passphrase) == 0)
             break;
 
-        fprintf(stderr, "Password mismatch\n");
+        error(0, "Password mismatch");
     }
 
-    if ( retries < 0 ) {
-        fprintf(stderr, "Cannot read passphrase\n");
+    if (retries < 0) {
+        error(0, "Cannot read passphrase\n");
         return -1;
     }
 
     struct ext4_encryption_key master_key = {
         .mode = 0,
         .raw = { 0 },
-        .size = cipher_key_size(opts.contents_cipher),
+        .size = cipher_key_size(contents_cipher),
     };
-    if ( derive_passphrase_to_key(passphrase, pass_sz, &master_key) < 0 )
+    if (derive_passphrase_to_key(passphrase, pass_sz, &master_key) < 0)
         return -1;
 
     key_serial_t serial = add_key(EXT4_ENCRYPTION_KEY_TYPE,
             full_key_descriptor, &master_key, sizeof(master_key),
             KEY_SPEC_USER_SESSION_KEYRING);
 
-    if ( serial == -1 ) {
-        fprintf(stderr, "Cannot add key to keyring: %s\n", strerror(errno));
+    if (serial == -1) {
+        error(0, "Cannot add key to keyring: %s\n", strerror(errno));
         return -1;
     }
 
