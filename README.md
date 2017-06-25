@@ -11,16 +11,16 @@ the security greatly improved by a greater key range.
 
 From `e2fsprogs` version 1.43 onwards, a new tool called `e4crypt` is bundled
 to work with the ext4 encryption facilities, but its semantics make it harder
-to use.
+to use casually.
 
 ## Usage
 ```console
-e2crypt [ [-p|--padding <len>] -s|--setup | -d|--decrypt | -e|--encrypt ] <dir>
+e2crypt [ [-p|--padding <len>] -e|--encrypt | -d|--decrypt | -r|--recrypt ] <dir>
     -p|--padding <len>:   Padding of filename (4, 8, 16 or 32, default 4)
-    -s|--setup <dir>:     Setup directory <dir> for encryption
+    -e|--encrypt <dir>:   Encrypt directory <dir> (initialize)
     -d|--decrypt <dir>:   Decrypt directory <dir>
-    -e|--encrypt <dir>:   Encrypt directory <dir>
-  If just <dir> is specified, information on directory <dir> is displayed.
+    -r|--recrypt <dir>:   Recrypt directory <dir>
+  No options: display encryption information on directory <dir>
 ```
 
 ### Example: encrypting a directory (setting up)
@@ -34,14 +34,16 @@ Policy version:       0
 Filename cipher:      aes-256-cts
 Contents cipher:      aes-256-xts
 Filename padding:     4
-Key descriptor:       0xB0679636D1282A4C
-Key serial:           not found
+Key descriptor:       b0679636d1282a4c
+Key serial:           [not found]
 Enter passphrase:
 Confirm passphrase:
 Directory vault now encrypted
 ```
 
 ### Example: decrypting an encrypted directory
+Enhanced permissions are needed to flush the file cache, so the contents
+of the decrypted directory can be displayed properly.
 
 ```console
 $ ls vault
@@ -50,6 +52,8 @@ FTRsD7y2dUyXl6e8omKYbB  IdLqPffZBKSebTeh6hZI7C  tReYAc2tKyIOHSIcaSV2DB
 $ e2crypt -d vault
 Enter passphrase: 
 Directory vault now decrypted
+Updating filesystem cache
+[sudo] password for user:
 
 $ ls vault
 fstab  passwd  services
@@ -57,7 +61,7 @@ fstab  passwd  services
 
 ### Example: recrypting an encrypted directory
 Enhanced permissions are needed to flush the file cache, so the contents
-of the encrypted directory can be displayed properly.
+of the recrypted directory can be displayed properly.
 
 ```console
 $ ls vault
@@ -65,6 +69,7 @@ fstab  passwd  services
 
 $ e2crypt -r vault
 Directory vault now recrypted
+Updating filesystem cache
 [sudo] password for user:
 
 $ ls vault
@@ -80,8 +85,8 @@ Policy version:       0
 Filename cipher:      aes-256-cts
 Contents cipher:      aes-256-xts
 Filename padding:     4
-Key descriptor:       0xB0679636D1282A4C
-Key serial:           186749517
+Key descriptor:       b0679636d1282a4c
+Key serial:           2661eacd
 ```
 
 ## Install

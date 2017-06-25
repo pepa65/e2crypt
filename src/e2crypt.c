@@ -22,10 +22,10 @@ void usage(FILE *std)
     fprintf(std, "%s - userspace tool to manage encrypted directories on ext4 filesystems\n\n", NAME);
     fprintf(std, "USAGE: %s [ [-p <len>] -s|--setup | -d|--decrypt | -e|--encrypt ] <dir>\n", NAME);
     fprintf(std, "    -p|--padding <len>:  Padding of filename (4, 8, 16 or 32, default 4)\n");
-    fprintf(std, "    -e|--encrypt <dir>:  Setup directory <dir> for encryption\n");
+    fprintf(std, "    -e|--encrypt <dir>:  Encrypt directory <dir> (initialize)\n");
     fprintf(std, "    -d|--decrypt <dir>:  Decrypt directory <dir>\n");
     fprintf(std, "    -r|--recrypt <dir>:  Recrypt directory <dir>\n");
-    fprintf(std, "  If just <dir> is specified, information on directory <dir> is displayed\n");
+    fprintf(std, "  No options: display encryption information on directory <dir>\n");
 }
 
 void error(bool show_usage, const char *fmt, ...)

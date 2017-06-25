@@ -1,3 +1,5 @@
+// container.c
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -159,15 +161,15 @@ int container_status(const char *dir_path)
     printf("Filename cipher:      %s\n", cipher_mode_to_string(policy.filenames_encryption_mode));
     printf("Contents cipher:      %s\n", cipher_mode_to_string(policy.contents_encryption_mode));
     printf("Filename padding:     %d\n", flags_to_padding_length(policy.flags));
-    printf("Key descriptor:       0x");
+    printf("Key descriptor:       ");
     for (int i=0; i<EXT4_KEY_DESCRIPTOR_SIZE; ++i)
-        printf("%02X", policy.master_key_descriptor[i] & 0xff);
+        printf("%02x", policy.master_key_descriptor[i] & 0xff);
     printf("\n");
 
     key_serial_t key_serial;
     if (find_key_by_descriptor(&policy.master_key_descriptor, &key_serial) == -1)
-        printf("Key serial:           not found\n");
-    else printf("Key serial:           %d\n", key_serial);
+        printf("Key serial:           [not found]\n");
+    else printf("Key serial:           %08x\n", key_serial);
 
     return 0;
 }
@@ -285,6 +287,7 @@ int container_attach(const char *dir_path)
 
     close(dirfd);
     printf("Directory %s now decrypted\n", dir_path);
+    system("echo 'Updating filesystem cache'; echo 2 |sudo tee /proc/sys/vm/drop_caches >/dev/null");
     return 0;
 }
 
@@ -318,6 +321,6 @@ int container_detach(const char *dir_path)
 
     close(dirfd);
     printf("Directory %s now recrypted\n", dir_path);
-    system("echo 2 |sudo tee /proc/sys/vm/drop_caches >/dev/null");
+    system("echo 'Updating filesystem cache'; echo 2 |sudo tee /proc/sys/vm/drop_caches >/dev/null");
     return 0;
 }
