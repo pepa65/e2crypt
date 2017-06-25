@@ -27,6 +27,7 @@ e2crypt [ [-p|--padding <len>] -e|--encrypt | -d|--decrypt | -r|--recrypt ] <dir
 
 ### Example: encrypting a directory (setting up)
 The target directory must exist on an ext4 filesystem and be empty.
+The password can never be changed.
 
 ```console
 $ mkdir vault
@@ -44,8 +45,8 @@ Directory vault now encrypted
 ```
 
 ### Example: decrypting an encrypted directory
-Enhanced permissions are needed to flush the file cache, so the contents
-of the decrypted directory can be displayed properly.
+A wrong password will be accepted, but only once the right password has been
+entered is the directory decrypted.
 
 ```console
 $ ls vault
@@ -61,9 +62,12 @@ $ ls vault
 fstab  passwd  services
 ```
 
-### Example: recrypting an encrypted directory
 Enhanced permissions are needed to flush the file cache, so the contents
-of the recrypted directory can be displayed properly.
+of the decrypted directory can be displayed properly.
+
+### Example: recrypting an encrypted directory
+The recrypting does not require a password, because the immutable password has
+been set on the encryption setup.
 
 ```console
 $ ls vault
@@ -77,8 +81,11 @@ Updating filesystem cache
 $ ls vault
 FTRsD7y2dUyXl6e8omKYbB  IdLqPffZBKSebTeh6hZI7C  tReYAc2tKyIOHSIcaSV2DB
 ```
+Enhanced permissions are needed to flush the file cache, so the contents
+of the recrypted directory can be displayed properly.
 
 ### Example: checking the encryption status of a directory
+The returncode is 0 when the directory is setup for encryption, 1 otherwise.
 
 ```console
 $ e2crypt vault
