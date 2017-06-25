@@ -2,16 +2,18 @@
 
 **Userspace tool to manage encrypted directories on ext4 filesystems**
 
-Linux kernel 4.1.3 introduced native encryption for the ext4 filesystem.
-This tool, *e2crypt*, is a userspace tool to manage encrypted ext4 directories.
-Its options are intended to make it ease to use for an enduser. The code has
-largely been copied from [ext4-crypt](https://github.com/gdelugre/ext4-crypt),
-but the options have been simplified, the messages easier to understand, but
-the security greatly improved by a greater key range.
+This tool, *e2crypt*, is a userspace tool to encrypt, decrypt and recrypt
+directories on ext4 filesystems. Its commandline options are intended to make
+these ext4 encryption features accessible in a user-friendly way.
 
-From `e2fsprogs` version 1.43 onwards, a new tool called `e4crypt` is bundled
-to work with the ext4 encryption facilities, but its semantics make it harder
-to use casually.
+The codebase was forked from [ext4-crypt](https://github.com/gdelugre/ext4-crypt)
+and then made easier to use and understand without losing any significant
+features, while increasing the security by enlarging the key range.
+
+Linux kernel 4.1.3 introduced native encryption for directories on
+ext4 filesystems. From `e2fsprogs` version 1.43 (released May 2016) onwards,
+a new tool called `e4crypt` is added to make use of the ext4 encryption
+facilities, but its semantics make it hard to use and it is not user-friendly.
 
 ## Usage
 ```console
@@ -91,6 +93,27 @@ Key serial:           2661eacd
 
 ## Install
 
+### Requirements
+
+Linux kernel 4.1.3 or newer with support for `CONFIG_EXT4_ENCRYPTION` (which
+is available by default).
+
+### Build dependencies
+
+- git
+- cmake
+- [libkeyutils-dev](http://people.redhat.com/~dhowells/keyutils/)
+- [libsodium-dev](http://download.libsodium.org/doc/)
+
+### Run-time dependencies
+
+- libkeyutils
+- libsodium
+- libc6
+
+### Installing
+The following will download, build and install **e2crypt**
+
 ```sh
 git clone https://github.com/pepa65/e2crypt
 cd e2crypt
@@ -98,17 +121,6 @@ cmake .
 make
 sudo make install
 ```
-
-### Requirements
-
-Linux kernel 4.1.3 or newer with support for `CONFIG_EXT4_ENCRYPTION`.
-
-### Built-time dependencies
-
-- git
-- cmake
-- [libkeyutils-dev](http://people.redhat.com/~dhowells/keyutils/)
-- [libsodium-dev](http://download.libsodium.org/doc/)
 
 ## Limitations of the kernel ext4 crypt implementation
 
