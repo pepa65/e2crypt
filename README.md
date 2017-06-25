@@ -141,3 +141,6 @@ The encryption policy is stored at the inode level of the directory and
 cannot be removed by userspace utilities. To remove the encrypted directory,
 it needs to be deleted (after the decrypted content is moved elsewhere).
 
+## Licence
+
+Original licence MIT, adapted code relicenced as GPLv3.
