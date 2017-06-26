@@ -14,6 +14,8 @@ Linux kernel 4.1.3 introduced native encryption for directories on
 ext4 filesystems. From `e2fsprogs` version 1.43 (released May 2016) onwards,
 a new tool called `e4crypt` is added to make use of the ext4 encryption
 facilities, but its semantics make it hard to use and it is not user-friendly.
+(GRUB cannot read an ext4 filesystem that has the `encrypt` option set. But
+in general this option doesn't seem necessary to be set for *e2crypt*.)
 
 ## Usage
 ```console
@@ -27,7 +29,7 @@ e2crypt [ [-p|--padding <len>] -e|--encrypt | -d|--decrypt | -r|--recrypt ] <dir
 
 ### Example: encrypting a directory (setting up)
 The target directory must exist on an ext4 filesystem and be empty.
-The password can never be changed.
+The password can never be changed!
 
 ```console
 $ mkdir vault
@@ -119,7 +121,7 @@ is available by default).
 - libc6
 
 ### Installing
-The following will download, build and install **e2crypt**
+The following will download, build and install *e2crypt*:
 
 ```sh
 git clone https://github.com/pepa65/e2crypt

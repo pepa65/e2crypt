@@ -1,0 +1,6 @@
+Wishlist:
+- read password from commandline or file
+- ability to change passwords
+- ability to reject wrong passwords
+- more checks on filesystem for informative errors
+- facility for checking de/recryption status
