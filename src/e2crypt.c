@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
 #include <getopt.h>
@@ -17,20 +16,24 @@ char *contents_cipher = "aes-256-xts";
 char *filename_cipher = "aes-256-cts";
 unsigned padding = 0;
 int usage_showed = 0;
+int sys = 1;
 
 static
 void usage(FILE *std)
 {
     fprintf(std, "%s - userspace tool to manage encrypted directories on ext4 filesystems\n\n", NAME);
-    fprintf(std, "USAGE: %s [ [-p <len>] -s|--setup | -d|--decrypt | -e|--encrypt ] <dir>\n", NAME);
+    fprintf(std, "USAGE: %s [ [-p <len>] -e|--encrypt | -d|--decrypt | -r|--recrypt ] [-n|--nodrop] <dir>\n", NAME);
     fprintf(std, "    -p|--padding <len>:  Padding of filename (4, 8, 16 or 32, default 4)\n");
     fprintf(std, "    -e|--encrypt <dir>:  Encrypt directory <dir> (initialize)\n");
     fprintf(std, "    -d|--decrypt <dir>:  Decrypt directory <dir>\n");
     fprintf(std, "    -r|--recrypt <dir>:  Recrypt directory <dir>\n");
+    fprintf(std, "    -n|--nodrop:         Don't renew the page cache (when decrypting or recrypting)\n");
+    fprintf(std, "     Renewing the page cache requires elevated privileges, but not renewing\n");
+    fprintf(std, "     causes the wrong (decrypted/recrypted) filenames to be current!\n");
     fprintf(std, "  No options: display encryption information on directory <dir>\n");
 }
 
-void error(bool show_usage, const char *fmt, ...)
+void error(int show_usage, const char *fmt, ...)
 {
 		if (show_usage && (!usage_showed++)) {
         usage(stderr);
@@ -44,7 +47,7 @@ void error(bool show_usage, const char *fmt, ...)
 }
 
 static
-bool is_valid_padding(unsigned padding)
+int is_valid_padding(unsigned padding)
 {
     return (padding == 4 || padding == 8 || padding == 16 || padding == 32);
 }
@@ -55,9 +58,10 @@ int main(int argc, char *argv[])
     char command = 0;
     char *dir_path = "";
 
-    const char *optstring = ":hp:e:d:r:";
+    const char *optstring = ":hnp:e:d:r:";
     static struct option longopts[] = {
         { "help", no_argument, 0, 'h' },
+        { "nodrop", no_argument, 0, 'n' },
         { "padding", required_argument, 0, 'p' },
         { "encrypt", required_argument, 0, 'e' },
         { "decrypt", required_argument, 0, 'd' },
@@ -65,12 +69,13 @@ int main(int argc, char *argv[])
         { 0, 0, 0, 0 },
     };
 
-    while (true) {
+    while (1) {
         c = getopt_long(argc, argv, optstring, longopts, 0);
         if (c == -1) break;
 
         switch (c) {
             case 'h': usage(stdout); return EXIT_SUCCESS;
+            case 'n': sys = 0; break;
             case 'p': if (optarg == 0) error(1, "Option -%c requires padding as an argument", c);
                 else padding = atoi(optarg); 
                 if (!is_valid_padding(padding))

@@ -19,11 +19,13 @@ in general this option doesn't seem necessary to be set for *e2crypt*.)
 
 ## Usage
 ```console
-e2crypt [ [-p|--padding <len>] -e|--encrypt | -d|--decrypt | -r|--recrypt ] <dir>
+e2crypt [ [-p|--padding <len>] -e|--encrypt | -d|--decrypt | -r|--recrypt ] [-n|--nodrop] <dir>
     -p|--padding <len>:   Padding of filename (4, 8, 16 or 32, default 4)
     -e|--encrypt <dir>:   Encrypt directory <dir> (initialize)
     -d|--decrypt <dir>:   Decrypt directory <dir>
     -r|--recrypt <dir>:   Recrypt directory <dir>
+		Renewing the page cache requires elevated privileges, but not renewing
+    causes the wrong (decrypted/recrypted) filenames to be listed!
   No options: display encryption information on directory <dir>
 ```
 
@@ -66,7 +68,7 @@ fstab  passwd  services
 
 Enhanced permissions are needed to flush the file cache, so the contents
 of the decrypted directory can be displayed properly. This basically executes
-as root: `echo 2 >/proc/sys/vm/drop_caches` (but using sudo).
+as root: `echo 3 >/proc/sys/vm/drop_caches` (but using sudo).
 
 ### Example: recrypting an encrypted directory
 The recrypting does not require a password, because the immutable password has

@@ -1,6 +1,5 @@
 Wishlist:
 - Use -e for setup and recrypt
-- Require commandline option for the drop_caches
 - Read password from commandline or file (scriptability)
 - Ability to change passwords (recreate dir, or some other way?)
 - Ability to reject wrong passwords (try opening?)

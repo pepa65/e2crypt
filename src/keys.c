@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -62,7 +61,7 @@ static
 ssize_t read_passphrase(const char *prompt, char *key, size_t n)
 {
     int stdin_fd = fileno(stdin);
-    const bool tty_input = isatty(stdin_fd);
+    const int tty_input = isatty(stdin_fd);
     struct termios old, new;
     size_t key_sz = 0;
 
@@ -123,7 +122,7 @@ int crypto_init()
 }
 
 // Generate random name identifier out of a predefined charset
-void generate_random_name(char *name, size_t length, bool filename)
+void generate_random_name(char *name, size_t length, int filename)
 {
     int byte;
     for (size_t i = 0; i < length; i++) {
@@ -169,7 +168,7 @@ int remove_key_for_descriptor(key_desc_t *key_desc)
 }
 
 // Request a key to be attached to the specified descriptor
-int request_key_for_descriptor(key_desc_t *key_desc, bool confirm)
+int request_key_for_descriptor(key_desc_t *key_desc, int confirm)
 {
     int retries = 5;
     char passphrase[EXT4_MAX_PASSPHRASE_SZ];

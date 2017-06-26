@@ -3,12 +3,12 @@
 extern char *contents_cipher;
 extern char *filename_cipher;
 extern unsigned padding;
+extern int sys;
 
 #ifndef EXT4_CRYPT_H
 #define EXT4_CRYPT_H
 
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <asm-generic/ioctl.h>
 #include <keyutils.h>
@@ -49,6 +49,8 @@ extern unsigned padding;
 #define EXT4_ENCRYPTION_KEY_TYPE "logon"
 #define EXT4_FULL_KEY_DESCRIPTOR_SIZE (EXT4_KEY_DESCRIPTOR_SIZE * 2 + EXT4_KEY_DESC_PREFIX_SIZE)
 
+#define DROP_CACHES "echo 'Updating filesystem cache'; sync; echo 3 |sudo tee /proc/sys/vm/drop_caches >/dev/null"
+
 typedef char key_desc_t[EXT4_KEY_DESCRIPTOR_SIZE];
 typedef char full_key_desc_t[EXT4_FULL_KEY_DESCRIPTOR_SIZE];
 
@@ -58,8 +60,7 @@ struct ext4_encryption_policy {
     char contents_encryption_mode;
     char filenames_encryption_mode;
     char flags;
-//    char master_key_descriptor[EXT4_KEY_DESCRIPTOR_SIZE];
-    key_desc_t master_key_descriptor;
+    char master_key_descriptor[EXT4_KEY_DESCRIPTOR_SIZE];
 } __attribute__((__packed__));
 
 struct ext4_encryption_key {
@@ -134,10 +135,10 @@ int container_status(const char *);
 int container_create(const char *);
 int container_attach(const char *);
 int container_detach(const char *);
-void generate_random_name(char *, size_t, bool);
+void generate_random_name(char *, size_t, int);
 int find_key_by_descriptor(key_desc_t *, key_serial_t *);
-int request_key_for_descriptor(key_desc_t *, bool);
+int request_key_for_descriptor(key_desc_t *, int);
 int remove_key_for_descriptor(key_desc_t *);
-void error(bool, const char *, ...);
+void error(int, const char *, ...);
 
 #endif
