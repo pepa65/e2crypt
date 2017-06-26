@@ -65,7 +65,8 @@ fstab  passwd  services
 ```
 
 Enhanced permissions are needed to flush the file cache, so the contents
-of the decrypted directory can be displayed properly.
+of the decrypted directory can be displayed properly. This basically executes
+as root: `echo 2 >/proc/sys/vm/drop_caches` (but using sudo).
 
 ### Example: recrypting an encrypted directory
 The recrypting does not require a password, because the immutable password has
@@ -83,7 +84,7 @@ Updating filesystem cache
 $ ls vault
 FTRsD7y2dUyXl6e8omKYbB  IdLqPffZBKSebTeh6hZI7C  tReYAc2tKyIOHSIcaSV2DB
 ```
-Enhanced permissions are needed to flush the file cache, so the contents
+Again, enhanced permissions needed to flush the file cache, so the contents
 of the recrypted directory can be displayed properly.
 
 ### Example: checking the encryption status of a directory
@@ -119,6 +120,7 @@ is available by default).
 - libkeyutils
 - libsodium
 - libc6
+- sudo (for the system call to drop file caches which requires privileges)
 
 ### Installing
 The following will download, build and install *e2crypt*:
