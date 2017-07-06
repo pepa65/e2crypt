@@ -1,6 +1,1 @@
-CMakeCache.txt
-CMakeFiles/*
-*.cmake
-install_manifest.txt
-Makefile
-e2crypt
+build/
