@@ -126,7 +126,7 @@ is available by default).
 The following will download, build and install *e2crypt*:
 
 ```sh
-git clone https://github.com/pepa65/e2crypt
+git clone https://gitlab.com/pepa65/e2crypt
 cd e2crypt
 cmake .
 make
