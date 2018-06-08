@@ -118,7 +118,7 @@ int set_ext4_encryption_policy(int dirfd, struct ext4_encryption_policy *policy)
 static
 int setup_ext4_encryption(const char *dir_path, int dirfd)
 {
-    struct ext4_encryption_policy policy;    
+    struct ext4_encryption_policy policy;
 
     // Current policy version
     policy.version = 0;
@@ -220,21 +220,14 @@ int container_create(const char *dir_path)
         error(0, "Cannot encrypt directory %s: already encrypted", dir_path);
         return -1;
     }
+    else {
+        error(0, "Encrypting directory %s failed", dir_path);
+        return -1;
+    }
 
     // Sets up the encryption policy
     if (setup_ext4_encryption(dir_path, dirfd) < 0) {
         error(0, "Error in encrypting directory %s", dir_path);
-        return -1;
-    }
-
-    // Check if the encryption policy was successfully created
-    if (get_ext4_encryption_policy(dirfd, &policy, &has_policy) < 0) {
-        error(0, "Cannot access directory properties of %s", dir_path);
-        return -1;
-    }
-
-    if (!has_policy) {
-        error(0, "Encrypting directory %s failed", dir_path);
         return -1;
     }
 
@@ -266,7 +259,7 @@ int container_attach(const char *dir_path)
         return -1;
     }
 
-    struct ext4_encryption_policy policy;    
+    struct ext4_encryption_policy policy;
     bool has_policy;
 
     // Check that this directory has already been set up for encryption
