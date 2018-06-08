@@ -25,8 +25,8 @@ void usage(FILE *std)
     fprintf(std, "USAGE: %s [ [-p <len>] -i|--init | -d|--decrypt | -e|--encrypt ] <dir>\n", NAME);
     fprintf(std, "    -p|--padding <len>:  Padding of filename (4, 8, 16 or 32, default 4)\n");
     fprintf(std, "    -i|--init <dir>:     Initialize empty directory for encryption <dir>\n");
-    fprintf(std, "    -e|--encrypt <dir>:  Encrypt initialized directory <dir>\n");
     fprintf(std, "    -d|--decrypt <dir>:  Decrypt initialized directory <dir>\n");
+    fprintf(std, "    -e|--encrypt <dir>:  Encrypt initialized directory <dir>\n");
     fprintf(std, "  No options: display encryption information on directory <dir>\n");
 }
 

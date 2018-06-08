@@ -21,19 +21,19 @@ in general this option doesn't seem necessary to be set for *e2crypt*.)
 ```console
 e2crypt [ [-p|--padding <len>] -e|--encrypt | -d|--decrypt | -r|--recrypt ] <dir>
     -p|--padding <len>:   Padding of filename (4, 8, 16 or 32, default 4)
-    -e|--encrypt <dir>:   Encrypt directory <dir> (initialize)
-    -d|--decrypt <dir>:   Decrypt directory <dir>
-    -r|--recrypt <dir>:   Recrypt directory <dir>
+    -i|--init <dir>:      Initialize directory <dir> for encryption
+    -d|--decrypt <dir>:   Decrypt initialized directory <dir>
+    -e|--encrypt <dir>:   Encrypt initialized directory <dir>
   No options: display encryption information on directory <dir>
 ```
 
-### Example: encrypting a directory (setting up)
+### Example: initializing a directory for encryption
 The target directory must exist on an ext4 filesystem and be empty.
 The password can never be changed!
 
 ```console
 $ mkdir vault
-$ e2crypt -e vault
+$ e2crypt -i vault
 Encrypted directory:  vault
 Policy version:       0
 Filename cipher:      aes-256-cts
@@ -68,15 +68,15 @@ Enhanced permissions are needed to flush the file cache, so the contents
 of the decrypted directory can be displayed properly. This basically executes
 as root: `echo 2 >/proc/sys/vm/drop_caches` (but using sudo).
 
-### Example: recrypting an encrypted directory
-The recrypting does not require a password, because the immutable password has
-been set on the encryption setup.
+### Example: encrypting a decrypted directory
+The encrypting does not require a password, because the immutable password has
+been set on the initialization for encryption.
 
 ```console
 $ ls vault
 fstab  passwd  services
 
-$ e2crypt -r vault
+$ e2crypt -e vault
 Directory vault now recrypted
 Updating filesystem cache
 [sudo] password for user:
