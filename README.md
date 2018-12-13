@@ -14,8 +14,18 @@ Linux kernel 4.1.3 introduced native encryption for directories on
 ext4 filesystems. From `e2fsprogs` version 1.43 (released May 2016) onwards,
 a new tool called `e4crypt` is added to make use of the ext4 encryption
 facilities, but its semantics make it hard to use and it is not user-friendly.
-(GRUB cannot read an ext4 filesystem that has the `encrypt` option set. But
-in general this option doesn't seem necessary to be set for *e2crypt*.)
+(GRUB cannot read an ext4 filesystem that has the `encrypt` option set! To undo:
+`debugfs -wR "feature -encrypt" /dev/...`
+
+Preconditions:
+* CONFIG_EXT4_ENCRYPTION compiles into kernel
+  * `grep CONFIG_EXT4_ENCRYPTION /boot/config-$(uname -r)`
+* Device blocksize and kernel page size both the same (usually 4096)
+  * `tune2fs -l /dev/... | grep 'Block size'`
+  * `getconf PAGE_SIZE`
+* Option encrypt must be set on ext4 filesystem
+  * `tune2fs -O encrypt /dev/device`
+ 
 
 ## Usage
 ```console
